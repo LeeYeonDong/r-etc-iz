@@ -1,9 +1,8 @@
 library(tidyverse)
-install.packages("agricolae")
 library(agricolae)
 
 
-data3 <- read.csv("F:/유아특수논문/data3.csv", header = TRUE)
+data3 <- read.csv("D:/유아특수논문/data3.csv", header = TRUE)
 data3 %>% str()
 data3$보조교사 <- as.integer(data3$보조교사) 
 data3$보육경력 <- as.factor(data3$보육경력) 
@@ -50,7 +49,20 @@ group <- c(group1,group2,group3,group4)
 보육경력_스트레스df %>% 
   group_by(group) %>% 
   summarise(group_mean = mean(보육경력_스트레스),
-            group_sd = sd(보육경력_스트레스))
+            group_sd = sd(보육경력_스트레스),
+            min = min(보육경력_스트레스),
+            max = max(보육경력_스트레스))
+
+(data3 %>% filter(보육경력 == 1) %>% dim())[1]
+(data3 %>% filter(보육경력 == 2) %>% dim())[1]
+(data3 %>% filter(보육경력 == 3) %>% dim())[1]
+(data3 %>% filter(보육경력 == 4) %>% dim())[1]
+
+보육경력_스트레스df %>% 
+  summarise(group_mean = mean(보육경력_스트레스),
+            group_sd = sd(보육경력_스트레스),
+            min = min(보육경력_스트레스),
+            max = max(보육경력_스트레스))
 
 # anova
 aov(보육경력_스트레스 ~ group, data = 보육경력_스트레스df) %>% summary()
@@ -461,20 +473,178 @@ library(HH)
 
 애착유형_직무하위df <- bind_rows(애착유형_과부하,애착유형_동료,애착유형_학부모,애착유형_원장)
 애착유형_직무하위df$직무하위 <- 애착유형_직무하위df$직무하위 %>% as.factor()
-애착유형_직무하위df$직무하위 <- gsub("과부하",1,애착유형_직무하위df$직무하위)
-애착유형_직무하위df$직무하위 <- gsub("동료",2,애착유형_직무하위df$직무하위)
-애착유형_직무하위df$직무하위 <- gsub("학부모",3,애착유형_직무하위df$직무하위)
-애착유형_직무하위df$직무하위 <- gsub("원장",4,애착유형_직무하위df$직무하위)
-애착유형_직무하위df$직무하위 <- 애착유형_직무하위df$직무하위 %>% as.integer()
 
 # ancova
+애착유형_직무하위df$애착유형 <- 애착유형_직무하위df$애착유형 %>% as.integer()
+ancova(freq ~ 애착유형 + 직무하위, data = 애착유형_직무하위df)
+
 애착유형_직무하위df$애착유형 <- 애착유형_직무하위df$애착유형 %>% as.factor()
-aov(직무하위 ~ freq + 애착유형, data = 애착유형_직무하위df) %>% summary()
-ancova(직무하위 ~ freq + 애착유형, data = 애착유형_직무하위df)
+aov(freq ~ 애착유형 + 직무하위, data = 애착유형_직무하위df) %>% summary()
 
 # scheffe
-애착유형_직무하위_result <- aov(직무하위 ~ freq + 애착유형, data = 애착유형_직무하위df)
+애착유형_직무하위_result <- aov(freq ~ 애착유형 + 직무하위, data = 애착유형_직무하위df)
 scheffe.test(애착유형_직무하위_result, "애착유형", alpha = 0.05, console = TRUE)
+
+# 애착유형 각각에 영향을 주는 직무 스트레스 요인
+# 애착유형 1
+애착유형1_과부하 <- data3 %>% 
+  select(애착유형, all_of(과부하_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_과부하$직무하위 <- c("과부하")
+
+애착유형1_동료 <- data3 %>% 
+  select(애착유형, all_of(동료_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_동료$직무하위 <- c("동료")
+
+애착유형1_학부모 <- data3 %>% 
+  select(애착유형, all_of(학부모_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_학부모$직무하위 <- c("학부모")
+
+애착유형1_원장 <- data3 %>% 
+  select(애착유형, all_of(원장_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_원장$직무하위 <- c("원장")
+
+애착유형1_직무하위df <- bind_rows(애착유형1_과부하,애착유형1_동료,애착유형1_학부모,애착유형1_원장)
+애착유형1_직무하위df$직무하위 <- 애착유형1_직무하위df$직무하위 %>% as.factor()
+
+# anova
+aov(freq ~ 직무하위, data = 애착유형1_직무하위df) %>% summary()
+
+# scheffe
+애착유형1_직무하위_result <- aov(freq ~ 직무하위, data = 애착유형1_직무하위df)
+scheffe.test(애착유형1_직무하위_result, "직무하위", alpha = 0.05, console = TRUE)
+
+
+# 애착유형 2
+애착유형2_과부하 <- data3 %>% 
+  select(애착유형, all_of(과부하_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_과부하$직무하위 <- c("과부하")
+
+애착유형2_동료 <- data3 %>% 
+  select(애착유형, all_of(동료_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_동료$직무하위 <- c("동료")
+
+애착유형2_학부모 <- data3 %>% 
+  select(애착유형, all_of(학부모_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_학부모$직무하위 <- c("학부모")
+
+애착유형2_원장 <- data3 %>% 
+  select(애착유형, all_of(원장_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_원장$직무하위 <- c("원장")
+
+애착유형2_직무하위df <- bind_rows(애착유형2_과부하,애착유형2_동료,애착유형2_학부모,애착유형2_원장)
+애착유형2_직무하위df$직무하위 <- 애착유형2_직무하위df$직무하위 %>% as.factor()
+
+# anova
+aov(freq ~ 직무하위, data = 애착유형2_직무하위df) %>% summary()
+
+# scheffe
+애착유형2_직무하위_result <- aov(freq ~ 직무하위, data = 애착유형2_직무하위df)
+scheffe.test(애착유형2_직무하위_result, "직무하위", alpha = 0.05, console = TRUE)
+
+
+
+# 애착유형 3
+애착유형3_과부하 <- data3 %>% 
+  select(애착유형, all_of(과부하_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_과부하$직무하위 <- c("과부하")
+
+애착유형3_동료 <- data3 %>% 
+  select(애착유형, all_of(동료_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_동료$직무하위 <- c("동료")
+
+애착유형3_학부모 <- data3 %>% 
+  select(애착유형, all_of(학부모_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_학부모$직무하위 <- c("학부모")
+
+애착유형3_원장 <- data3 %>% 
+  select(애착유형, all_of(원장_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_원장$직무하위 <- c("원장")
+
+애착유형3_직무하위df <- bind_rows(애착유형3_과부하,애착유형3_동료,애착유형3_학부모,애착유형3_원장)
+애착유형3_직무하위df$직무하위 <- 애착유형3_직무하위df$직무하위 %>% as.factor()
+
+# anova
+aov(freq ~ 직무하위, data = 애착유형3_직무하위df) %>% summary()
+
+# scheffe
+애착유형3_직무하위_result <- aov(freq ~ 직무하위, data = 애착유형3_직무하위df)
+scheffe.test(애착유형3_직무하위_result, "직무하위", alpha = 0.05, console = TRUE)
+
+
+# 애착유형 4
+애착유형4_과부하 <- data3 %>% 
+  select(애착유형, all_of(과부하_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_과부하$직무하위 <- c("과부하")
+
+애착유형4_동료 <- data3 %>% 
+  select(애착유형, all_of(동료_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_동료$직무하위 <- c("동료")
+
+애착유형4_학부모 <- data3 %>% 
+  select(애착유형, all_of(학부모_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_학부모$직무하위 <- c("학부모")
+
+애착유형4_원장 <- data3 %>% 
+  select(애착유형, all_of(원장_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_원장$직무하위 <- c("원장")
+
+애착유형4_직무하위df <- bind_rows(애착유형4_과부하,애착유형4_동료,애착유형4_학부모,애착유형4_원장)
+애착유형4_직무하위df$직무하위 <- 애착유형4_직무하위df$직무하위 %>% as.factor()
+
+# anova
+aov(freq ~ 직무하위, data = 애착유형4_직무하위df) %>% summary()
+
+# scheffe
+애착유형4_직무하위_result <- aov(freq ~ 직무하위, data = 애착유형4_직무하위df)
+scheffe.test(애착유형4_직무하위_result, "직무하위", alpha = 0.05, console = TRUE)
 
 
 
@@ -532,22 +702,177 @@ library(HH)
 
 애착유형_대처하위df <- bind_rows(애착유형_문제,애착유형_심리,애착유형_사회,애착유형_소망)
 애착유형_대처하위df$대처하위 <- 애착유형_대처하위df$대처하위 %>% as.factor()
-애착유형_대처하위df$대처하위 <- gsub("문제",1,애착유형_대처하위df$대처하위)
-애착유형_대처하위df$대처하위 <- gsub("심리",2,애착유형_대처하위df$대처하위)
-애착유형_대처하위df$대처하위 <- gsub("사회",3,애착유형_대처하위df$대처하위)
-애착유형_대처하위df$대처하위 <- gsub("소망",4,애착유형_대처하위df$대처하위)
-애착유형_대처하위df$대처하위 <- 애착유형_대처하위df$대처하위 %>% as.integer()
 
 # ancova
-애착유형_대처하위df$애착유형 <- 애착유형_대처하위df$애착유형 %>% as.factor()
-aov(대처하위 ~ freq + factor(애착유형), data = 애착유형_대처하위df) %>% summary()
-ancova(대처하위 ~ freq + 애착유형, data = 애착유형_대처하위df)
+애착유형_대처하위df$애착유형 <- 애착유형_대처하위df$애착유형 %>% as.integer()
+ancova(freq ~ 애착유형 + 대처하위, data = 애착유형_대처하위df)
 
-lm(대처하위 ~ freq + factor(애착유형), data = 애착유형_대처하위df) %>% summary()
+애착유형_대처하위df$애착유형 <- 애착유형_대처하위df$애착유형 %>% as.factor()
+aov(freq ~ 애착유형 + 대처하위, data = 애착유형_대처하위df) %>% summary()
 
 # scheffe
-애착유형_대처하위_result <- aov(대처하위 ~ freq + 애착유형, data = 애착유형_대처하위df)
+애착유형_대처하위_result <- aov(freq ~ 애착유형 + 대처하위, data = 애착유형_대처하위df)
 scheffe.test(애착유형_대처하위_result, "애착유형", alpha = 0.05, console = TRUE)
 
 
 
+# 애착유형 각각에 영향을 주는 직무 스트레스 요인
+# 애착유형 1
+애착유형1_문제 <- data3 %>% 
+  select(애착유형, all_of(문제_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_문제$대처하위 <- c("문제")
+
+애착유형1_심리 <- data3 %>% 
+  select(애착유형, all_of(심리_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_심리$대처하위 <- c("심리")
+
+애착유형1_사회 <- data3 %>% 
+  select(애착유형, all_of(사회_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_사회$대처하위 <- c("사회")
+
+애착유형1_소망 <- data3 %>% 
+  select(애착유형, all_of(소망_list)) %>% 
+  filter(애착유형 == 1) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형1_소망$대처하위 <- c("소망")
+
+애착유형1_대처하위df <- bind_rows(애착유형1_문제,애착유형1_심리,애착유형1_사회,애착유형1_소망)
+애착유형1_대처하위df$대처하위 <- 애착유형1_대처하위df$대처하위 %>% as.factor()
+
+# anova
+aov(freq ~ 대처하위, data = 애착유형1_대처하위df) %>% summary()
+
+# scheffe
+애착유형1_대처하위_result <- aov(freq ~ 대처하위, data = 애착유형1_대처하위df)
+scheffe.test(애착유형1_대처하위_result, "대처하위", alpha = 0.05, console = TRUE)
+
+
+# 애착유형 2
+애착유형2_문제 <- data3 %>% 
+  select(애착유형, all_of(문제_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_문제$대처하위 <- c("문제")
+
+애착유형2_심리 <- data3 %>% 
+  select(애착유형, all_of(심리_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_심리$대처하위 <- c("심리")
+
+애착유형2_사회 <- data3 %>% 
+  select(애착유형, all_of(사회_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_사회$대처하위 <- c("사회")
+
+애착유형2_소망 <- data3 %>% 
+  select(애착유형, all_of(소망_list)) %>% 
+  filter(애착유형 == 2) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형2_소망$대처하위 <- c("소망")
+
+애착유형2_대처하위df <- bind_rows(애착유형2_문제,애착유형2_심리,애착유형2_사회,애착유형2_소망)
+애착유형2_대처하위df$대처하위 <- 애착유형2_대처하위df$대처하위 %>% as.factor()
+
+# anova
+aov(freq ~ 대처하위, data = 애착유형2_대처하위df) %>% summary()
+
+# scheffe
+애착유형2_대처하위_result <- aov(freq ~ 대처하위, data = 애착유형2_대처하위df)
+scheffe.test(애착유형2_대처하위_result, "대처하위", alpha = 0.05, console = TRUE)
+
+
+
+# 애착유형 3
+애착유형3_문제 <- data3 %>% 
+  select(애착유형, all_of(문제_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_문제$대처하위 <- c("문제")
+
+애착유형3_심리 <- data3 %>% 
+  select(애착유형, all_of(심리_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_심리$대처하위 <- c("심리")
+
+애착유형3_사회 <- data3 %>% 
+  select(애착유형, all_of(사회_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_사회$대처하위 <- c("사회")
+
+애착유형3_소망 <- data3 %>% 
+  select(애착유형, all_of(소망_list)) %>% 
+  filter(애착유형 == 3) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형3_소망$대처하위 <- c("소망")
+
+애착유형3_대처하위df <- bind_rows(애착유형3_문제,애착유형3_심리,애착유형3_사회,애착유형3_소망)
+애착유형3_대처하위df$대처하위 <- 애착유형3_대처하위df$대처하위 %>% as.factor()
+
+# anova
+aov(freq ~ 대처하위, data = 애착유형3_대처하위df) %>% summary()
+
+# scheffe
+애착유형3_대처하위_result <- aov(freq ~ 대처하위, data = 애착유형3_대처하위df)
+scheffe.test(애착유형3_대처하위_result, "대처하위", alpha = 0.05, console = TRUE)
+
+
+# 애착유형 4
+애착유형4_문제 <- data3 %>% 
+  select(애착유형, all_of(문제_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_문제$대처하위 <- c("문제")
+
+애착유형4_심리 <- data3 %>% 
+  select(애착유형, all_of(심리_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_심리$대처하위 <- c("심리")
+
+애착유형4_사회 <- data3 %>% 
+  select(애착유형, all_of(사회_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_사회$대처하위 <- c("사회")
+
+애착유형4_소망 <- data3 %>% 
+  select(애착유형, all_of(소망_list)) %>% 
+  filter(애착유형 == 4) %>% 
+  pivot_longer(cols = -애착유형, names_to = "문항평균", values_to = "freq") %>% 
+  select(-문항평균) 
+애착유형4_소망$대처하위 <- c("소망")
+
+애착유형4_대처하위df <- bind_rows(애착유형4_문제,애착유형4_심리,애착유형4_사회,애착유형4_소망)
+애착유형4_대처하위df$대처하위 <- 애착유형4_대처하위df$대처하위 %>% as.factor()
+
+# anova
+aov(freq ~ 대처하위, data = 애착유형4_대처하위df) %>% summary()
+
+# scheffe
+애착유형4_대처하위_result <- aov(freq ~ 대처하위, data = 애착유형4_대처하위df)
+scheffe.test(애착유형4_대처하위_result, "대처하위", alpha = 0.05, console = TRUE)
