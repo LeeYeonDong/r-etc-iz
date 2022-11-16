@@ -33,6 +33,6 @@ rownames(df_sum) <- "summation"
 rbind(df, df_sum)
 
 
-## 3.9
+## 연습문제 3.9 (2)
 n <- 150
 factorial(365-n+1) / 365^n
