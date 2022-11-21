@@ -67,6 +67,12 @@ length(y)
 fit <- lm(y ~ x)
 summary(fit)
 
+data("airquality")
+View(airquality)
+
+airquality$Wind
+airquality$Temp
+
 fit <- lm(Temp ~ Wind, data = airquality)
 summary(fit)
 
@@ -78,7 +84,7 @@ abline(fit, col = "red")
 airquality$Wind
 airquality$Temp
 
-confint(fit, level = 0.95) #b1에 대한 신뢰구간
+confint(fit, level = 0.95) # 회귀계수에 대한 신뢰구간
 
 ## 예제 10.7
 predict(fit)
@@ -120,8 +126,9 @@ fit <- lm(mtcars$drat ~ mtcars$hp + mtcars$wt + mtcars$mpg + mtcars$disp)
 summary(fit)
 
 # 잔차분석
-par(mfrow = c(2,2))
+par(mfrow = c(1,1))
 plot(fit)
+
 # 1 : 잔차 ~ 회귀선 -> 1) 잔차 형태가 커브 : 선형성 의심, 2) 등분산성 의심
 # 2 : QQplot -> 정규성
 # 3: scaled 잔차 ~ 회귀선 -> 등분산성
