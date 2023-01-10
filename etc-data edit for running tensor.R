@@ -108,7 +108,7 @@ reply <- 댓글_ytb_tag_df$reply %>%
 reply_paste <- c()
 
 for (i in 1:length(reply)){
-  reply_paste1 <- paste(reply_paste, reply[i], sep = ". ")
+  reply_paste <- paste(reply_paste, reply[i], sep = ". ")
   cat(i, '번째 document 합지는 중.\n')
 }
 
