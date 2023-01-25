@@ -5,6 +5,42 @@ buildDictionary(ext_dic = "woorimalsam")  # "woorimalsam" dic을 불러옵니다
 useNIADic() 
 extractNoun(v1)
 
+# KoNLP useNIADic
+install.packages("multilinguer")
+library(multilinguer)
+install_jdk() # rjava 설치
+install.packages(c('stringr', 'hash', 'tau', 'Sejong', 'RSQLite', 'devtools'), type = "binary")
+#
+install.packages("remotes")
+devtools::install_github('haven-jeon/KoNLP', upgrade = "never", INSTALL_opts=c("--no-multiarch"))
+library(KoNLP) #최종적으로 "KoNLP" 패키지를 불러옵니다
+
+devtools::install_github('haven-jeon/NIADic/NIADic', build_vignettes = TRUE)
+Sys.setenv(JAVA_HOME='C:/Program Files/Java/jdk-18.0.1.1')  # 설치한 JAVA version에 따라 달라집니다
+buildDictionary(ext_dic = "woorimalsam")  # "woorimalsam" dic을 불러옵니다
+useNIADic() 
+
+# package
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(tm)
+library(NLP)
+library(qdap)
+library(corpus)
+library(wordcloud2)
+library(stringr)
+library(rJava)
+library(base64enc)
+library(RmecabKo)
+library(reshape2)
+library(tidytext)
+library(ggthemes)
+library(widyr)
+library(ggraph)
+library(tidygraph)
+library(tidytext)
+
 # 1. https://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar 여기에 접속하셔서 <scala-library-2.11.8> 파일을 다운
 # 2. C:\Users\선생님 노트북 이름\AppData\Local\R\win-library\4.2\KoNLP\java에 가셔서 다운받은 scala-library-2.11.8 파일을 붙여넣기한다
 # 3. C:\Program Files\R\R-4.2.2\library 로 간다
@@ -16,15 +52,16 @@ library(tidyverse)
 (20+3*2)/3
 20^2
 10 %% 3 # 나눗셈의 나머지
-12 %/% 5 # 나눗셈의 몫
+10 %/% 3 # 나눗셈의 몫
 
 ## 할당 연산자
 x1 <- 1:10
-x2 = 101:110
-1001:1100 -> x3
+x2 = c("이연동","이연동2")
+1001:1100 -> x3 # vector
 
 ## 논리 연산자 (TRUE, FALSE)
 10 < 11
+"이연동" < "이연동"
 100 < 29
 10 <= 11
 100 <= 29
@@ -104,17 +141,29 @@ ggplot(mpg, aes(x = cty, y= hwy, colour = factor(cyl))) +
 
 
 ## 데이터 프레임 살펴보기
-head(mpg,10)
-tail(mpg,20)
+data(mpg)
+class(mpg)
+
+head(mpg)
+
+head(mpg, 10)
+
+tail(mpg, 20)
 
 str(mpg)
+glimpse(mpg) # tidyverse
 
 dim(mpg)
 nrow(mpg)
 ncol(mpg)
 
+mpg$manufacturer
+
 ## 색인(index, 첨자) 종류 
-view(mpg)
+View(mpg)
+
+mpg[  ,1]
+mpg[10, ]
 
 mpg[1,4]
 mpg[20,5]
@@ -160,26 +209,36 @@ library(stringr)
 library(rJava)
 library(tidytext)
 library(dplyr)
-library(reshape)
+library(reshape) 
+
+숫자1 <- c(1:3)
+class(숫자1)
+숫자2 <- c("1":"3")
+class(숫자2)
 
 # memory
 memory.size(20000)
 memory.limit()
 
 # 데이터 불러오기 및 전처리(Preprocessing)
-raw1 <- read_csv(file = "D:/대학원/textmining/Doit/빅카인즈_국립대학_육성사업.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
-# bigkinds만 encoding='utf-8'
+raw1 <- read_csv(file = "D:/대학원/textmining/Doit/빅카인즈_국립대학_육성사업.csv", col_names = TRUE, locale = locale('ko',encoding='utf-8'))
+# bigkinds만 encoding = 'utf-8'
 
 # 고유명사 추가
-buildDictionary(ext_dic = "NIADic", user_dic = data.frame("아파트","nqq"),replace_usr_dic = TRUE)
+buildDictionary(ext_dic = "NIADic", user_dic = data.frame("새단어","nqq"),replace_usr_dic = TRUE)
 
 str(raw1) # 구조확인
-glimpse(raw1) #tidyverse 제공
+glimpse(raw1) # tidyverse 제공
 
+# 중복기사 제거
 raw1 <- raw1[-which(duplicated(raw1$제목)),]
+glimpse(raw1)
 
 # 필요한 변수 선택 - 변수(variable)가 무엇이냐?
-raw1_df <- select(raw1,"키워드","일자") # Syntax of select() select(x, variables_to_select)
+raw1_df <- select(raw1,키워드,일자) # Syntax of select() select(x, variables_to_select)
+View(raw1_df)
+
+# 일자별 정렬
 raw1_df <- arrange(raw1_df, 일자)
 raw1_df$일자
 
@@ -191,12 +250,17 @@ dim(raw1_df)[1]
 dim(raw1_df)[2]
 
 raw1_df$id <- c(1:dim(raw1_df)[1])
+View(raw1_df)
 
 # 월별추이
-raw1_df$일자 <- str_sub(raw1_df$일자,1,6)         
+raw1_df$일자 <- str_sub(raw1_df$일자,1,6) # 20190301 -> 201903      
+View(raw1_df)
 
-raw1_df_월별_table <- as.data.frame(table(raw1_df$일자)) # raw1_df$일자 %>% table() %>% as.data.frame()
+raw1_table <- table(raw1_df$일자)
+
+raw1_df_월별_table <- as.data.frame(raw1_table) # raw1_df$일자 %>% table() %>% as.data.frame()
 names(raw1_df_월별_table) <- c("날짜_월별","Freq")
+raw1_df_월별_table
 
 ggplot(data = raw1_df_월별_table, aes(x = 날짜_월별, y = Freq, group = 1)) + 
   geom_line(size = 2, colour="#006600") + 
@@ -208,56 +272,3 @@ ggplot(data = raw1_df_월별_table, aes(x = 날짜_월별, y = Freq, group = 1))
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 15))
 
-
-# Frequency table
-raw1_token_df <- unnest_tokens(raw1_df, input = 키워드, output = word, token = "words", drop = FALSE)
-  
-raw1_token_df_한글 <- raw1_token_df %>%  
-    mutate(단어 = str_match(word,'([가-힣]+)')[,2]) %>% ## "한글" variable을 만들고 한글만 저장         
-    na.omit() %>% ## ([가-힣]+)/P') 한글만을 선택하는 정규표현식
-    mutate(글자수 = str_length(단어)) %>%   ## "글자수" variable을 만듭니다 
-    filter(str_length(단어) >= 2) 
-  
-raw1_token_df_영어 <- raw1_token_df %>%  
-    mutate(단어 = str_match(word,'([a-zA-Z]+)')[,2]) %>% ## "한글" variable을 만들고 한글만 저장         
-    na.omit() %>% ## 
-    mutate(글자수=str_length(단어)) %>%   ## "글자수" variable을 만듭니다 
-    filter(str_length(단어) >= 3) 
-  
-raw1_token_df <- bind_rows(raw1_token_df_한글, raw1_token_df_영어)
-raw1_token_df <- select(raw1_token_df,-c(키워드,단어))
-
-raw1_token_df$일자 <- as.integer(raw1_token_df$일자)
-
-
-# 불용어 - 반복 작업 필요
-제거 <- c()
-
-chr <- c("블랙스튜디오", "반선섭", "개소식")
-
-for(i in 1:length(chr)){
-  
-  cat(i, '번째 전처리 제거 단어를 찾는 중 입니다.\n') 
-  
-  del.tmp <- grep(chr[i], raw1_token_df$word)
-  제거 <- append(제거,del.tmp)
-}
-
-raw1_token_df <- raw1_token_df[-제거,]
-
-
-# 최다 빈도 단어 Top30을 뽑습니다
-token_count_table <- table(raw1_token_df$word) # 객체별 빈도를 셉니다
-token_count <- sort(token_count_table, decreasing = TRUE) # 내림차순 정렬 합니다
-token_count30 <- head(token_count, 30)  ## Top 30까지 추립니다
-
-# frequency table
-frequency_table = as.data.frame(token_count30)
-
-write.csv(frequency_table, file = "D:/대학원/textmining/Doit/frequency_table.csv", fileEncoding = 'cp949')
-
-read_csv(file = "D:/대학원/textmining/Doit/frequency_table.csv", col_names = TRUE, locale=locale('ko',encoding = 'cp949'))
-
-# word cloud
-token_count30_df <- as.data.frame(token_count30)
-wordcloud2(token_count30_df, minRotation = 0, maxRotation = 0, color = 'black') 
