@@ -189,28 +189,6 @@ mpg$manufacturer  # 콘크리트 바른 벽돌을 하나하나 분리
 
 
 #### textmining
-install.packages("corpus")
-install.packages("qdap")
-install.packages("tm")
-install.packages("wordcloud2")
-install.packages("topicmodels")
-install.packages("ldatuning")
-install.packages("dplyr")
-install.packages("tidytext")
-install.packages("stringr")
-install.packages("plyr")
-install.packages("rJava")
-library(ggplot2)
-library(tm)
-library(qdap)
-library(corpus)
-library(wordcloud2)
-library(stringr)
-library(rJava)
-library(tidytext)
-library(dplyr)
-library(reshape) 
-
 숫자1 <- c(1:3)
 class(숫자1)
 숫자2 <- c("1":"3")
@@ -231,44 +209,52 @@ str(raw1) # 구조확인
 glimpse(raw1) # tidyverse 제공
 
 # 중복기사 제거
-raw1 <- raw1[-which(duplicated(raw1$제목)),]
+raw1 <- distinct(raw1, 제목, .keep_all = TRUE)
 glimpse(raw1)
+View(raw1)
 
 # 필요한 변수 선택 - 변수(variable)가 무엇이냐?
-raw1_df <- select(raw1,키워드,일자) # Syntax of select() select(x, variables_to_select)
+raw1_df <- select(raw1, 일자, 언론사, 키워드) # Syntax of select() select(x, variables_to_select)
 View(raw1_df)
+raw1_df
 
 # 일자별 정렬
 raw1_df <- arrange(raw1_df, 일자)
-raw1_df$일자
 
 nrow(raw1_df)
 ncol(raw1_df)
 
 dim(raw1_df)
-dim(raw1_df)[1]
-dim(raw1_df)[2]
+dim(raw1_df)[1] # index 첨자 
+dim(raw1_df)[2] 
 
-raw1_df$id <- c(1:dim(raw1_df)[1])
+
+raw1_df$id <- 1:dim(raw1_df)[1]
 View(raw1_df)
 
 # 월별추이
 raw1_df$일자 <- str_sub(raw1_df$일자,1,6) # 20190301 -> 201903      
 View(raw1_df)
 
+class(raw1_df)
+class(raw1_df$일자)
 raw1_table <- table(raw1_df$일자)
+class(raw1_table)
 
 raw1_df_월별_table <- as.data.frame(raw1_table) # raw1_df$일자 %>% table() %>% as.data.frame()
-names(raw1_df_월별_table) <- c("날짜_월별","Freq")
+names(raw1_df_월별_table)
+
+names(raw1_df_월별_table) <- c("날짜_월별","빈도")
 raw1_df_월별_table
 
-ggplot(data = raw1_df_월별_table, aes(x = 날짜_월별, y = Freq, group = 1)) + 
+ggplot(data = raw1_df_월별_table, aes(x = 날짜_월별, y = 빈도, group = 1)) + 
   geom_line(size = 2, colour="#006600") + 
-  geom_point(size = 1, colour="#006600") +
-  coord_cartesian(ylim = c(0, 30)) + 
-  geom_text(aes(label = Freq),hjust = 0.5, vjust = -1, size = 7) +
-  geom_hline(yintercept = mean(raw1_df_월별_table$Freq), color='red',linetype='dashed', size = 1) +
+  geom_point(size = 5, colour="#006600") +
+  coord_cartesian(ylim = c(0, 30)) +
+  geom_text(aes(label = 빈도),hjust = 0.5, vjust = -1, size = 5) +
+  geom_hline(yintercept = mean(raw1_df_월별_table$빈도), color='red',linetype='dashed', size = 1) +
   labs(x="", y="") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 15))
+
 

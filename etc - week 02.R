@@ -23,53 +23,70 @@ str(raw1) # 구조확인
 glimpse(raw1) # tidyverse 제공
 
 # 중복기사 제거
-raw1 <- raw1[-which(duplicated(raw1$제목)),]
+raw1 <- distinct(raw1, 제목, .keep_all = TRUE)
 glimpse(raw1)
 
 # 필요한 변수 선택 - 변수(variable)가 무엇이냐?
-raw1_df <- select(raw1,키워드,일자) # Syntax of select() select(x, variables_to_select)
+raw1_df <- select(raw1, 일자, 언론사, 키워드, 제목) # Syntax of select() select(x, variables_to_select)
 
+# id 부여
 raw1_df$id <- c(1:dim(raw1_df)[1])
 
+# 키워드 바꾸기
+raw1_df$키워드 <- gsub("블랙 스튜디오", "블랙스튜디오", raw1_df$키워드)
+
+grep("블랙스튜디오", raw1_df$키워드)
+View(raw1_df)
+
+# 월별추이
+raw1_df$일자 <- str_sub(raw1_df$일자,1,6)
+
 # Frequency table
-raw1_token_df <- unnest_tokens(raw1_df, input = 키워드, output = word, token = "words", drop = FALSE)
+raw1_token_df <- unnest_tokens(raw1_df, input = 키워드, output = word, token = "words")
 
 raw1_token_df_한글 <- raw1_token_df %>%  
-  mutate(단어 = str_match(word,'([가-힣]+)')[,2]) %>% # "한글" variable을 만들고 한글만 저장 / ([가-힣]+)/P') 한글만을 선택하는 정규표현식        
+  mutate(단어 = str_match(word,"([가-힣]+)")[,2]) %>% # "한글" variable을 만들고 한글만 저장 / ([가-힣]+)/P') 한글만을 선택하는 정규표현식        
   na.omit() %>% # 
-  mutate(글자수 = str_length(단어)) %>%  # "글자수" variable을 만듭니다 
   filter(str_length(단어) >= 2) 
 
 raw1_token_df_영어 <- raw1_token_df %>%  
-  mutate(단어 = str_match(word,'([a-zA-Z]+)')[,2]) %>% ## "한글" variable을 만들고 한글만 저장         
-  na.omit() %>% ## 
-  mutate(글자수=str_length(단어)) %>%   ## "글자수" variable을 만듭니다 
+  mutate(단어 = str_match(word,"([a-zA-Z]+)")[,2]) %>% ## "영어" variable을 만들고 영어만 저장         
+  na.omit() %>% 
   filter(str_length(단어) >= 3) 
 
 raw1_token_df <- bind_rows(raw1_token_df_한글, raw1_token_df_영어)
-raw1_token_df <- select(raw1_token_df,-단어)
+raw1_token_df <- select(raw1_token_df, -word)
 
 raw1_token_df$일자 <- as.integer(raw1_token_df$일자)
 
+View(head(raw1_token_df, 1000))
+
+v1 <- c(1:9)
+mean(v1)
 
 # 불용어 - 반복 작업 필요
+dd <- grep("블랙스튜디오", raw1_token_df$단어)
+raw1_token_df[dd,]
+raw1_token_df[grep("블랙스튜디오", raw1_token_df$단어),]
+
 제거 <- c()
 
-chr <- c("블랙스튜디오", "반선섭", "개소식")
+chr <- c("블랙스튜디오", "반선섭", "개소식", "블랙", "스튜디오")
 
 for(i in 1:length(chr)){
   
   cat(i, '번째 전처리 제거 단어를 찾는 중 입니다.\n') 
   
-  del.tmp <- grep(chr[i], raw1_token_df$word)
+  del.tmp <- grep(chr[i], raw1_token_df$단어)
   제거 <- append(제거,del.tmp)
 }
 
 raw1_token_df <- raw1_token_df[-제거,]
-
+View(raw1_token_df)
+## lec.3
 
 # 최다 빈도 단어 Top30을 뽑습니다
-token_count_table <- table(raw1_token_df$word) # 객체별 빈도를 셉니다
+token_count_table <- table(raw1_token_df$단어) # 객체별 빈도를 셉니다
 token_count <- sort(token_count_table, decreasing = TRUE) # 내림차순 정렬 합니다
 class(token_count)
 token_count30 <- head(token_count, 30)  ## Top 30까지 추립니다
@@ -97,9 +114,9 @@ token_count30_df %>%
 
 # TF-IDF
 raw1_tf_idf <- raw1_token_df %>% 
-  dplyr::count(키워드, word) %>% 
-  filter(str_count(word) > 1) %>% 
-  bind_tf_idf(term = word, document = 키워드, n = n) %>% 
+  dplyr::count(id, 단어) %>% 
+  filter(str_count(단어) > 1) %>% 
+  bind_tf_idf(term = 단어, document = id, n = n) %>% 
   arrange(-tf_idf)
 
 write.csv(raw1_tf_idf, file = "D:/대학원/textmining/Doit/raw1_tf_idf.csv", fileEncoding = 'cp949')
