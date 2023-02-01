@@ -81,6 +81,19 @@ for(i in 1:length(chr)){
   제거 <- append(제거,del.tmp)
 }
 
+stopwords_en
+stopwords_kor
+
+chr <- stopwords_kor$stopwords_kor
+
+for(i in 1:length(chr)){
+  
+  cat(i, '번째 전처리 제거 단어를 찾는 중 입니다.\n') 
+  
+  del.tmp <- grep(chr[i], raw1_token_df$단어)
+  제거 <- append(제거,del.tmp)
+}
+
 raw1_token_df <- raw1_token_df[-제거,]
 View(raw1_token_df)
 ## lec.3
@@ -99,7 +112,29 @@ write.csv(frequency_table, file = "D:/대학원/textmining/Doit/frequency_table.
 read_csv(file = "D:/대학원/textmining/Doit/frequency_table.csv", col_names = TRUE, locale=locale('ko',encoding = 'cp949'))
 
 # word cloud
-wordcloud2(token_count30_df, minRotation = 0, maxRotation = 0, color = 'black') 
+library(devtools)
+devtools::install_github("lchiffon/wordcloud2") # 기존 wordcloud2 패키지 제거
+library(wordcloud2)
+
+wordcloud2(token_count30, minRotation = 0, maxRotation = 0, color = "black") 
+wordcloud2(token_count30)
+wordcloud2(token_count30, minRotation = pi/6, maxRotation = -pi/6) 
+
+# 글자크기로 순위를 정함
+wordcloud2(token_count, minSize = 10) 
+
+# 글자색
+wordcloud2(token_count30, color = "random-light") 
+wordcloud2(token_count30, color = "random-light", backgroundColor = "black")
+wordcloud2(token_count30, color = "random-light", backgroundColor = "grey")
+wordcloud2(token_count30, color = "random-dark")
+
+# letterCloud
+letterCloud(data = token_count, word = "대학", wordSize = 1)
+
+# use figure file
+wordcloud2(head(token_count,1000), figPath = "D:/대학원/example.png", color = "random-dark")
+wordcloud2(head(token_count,100), figPath = "D:/대학원/example1.png", color = "random-dark")
 
 # bargraph
 token_count30_df %>% 
@@ -114,7 +149,7 @@ token_count30_df %>%
 
 # TF-IDF
 raw1_tf_idf <- raw1_token_df %>% 
-  dplyr::count(id, 단어) %>% 
+  count(id, 단어) %>% 
   filter(str_count(단어) > 1) %>% 
   bind_tf_idf(term = 단어, document = id, n = n) %>% 
   arrange(-tf_idf)
