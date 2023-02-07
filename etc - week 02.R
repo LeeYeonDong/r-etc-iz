@@ -107,13 +107,13 @@ token_count30 <- head(token_count, 30)  ## Top 30까지 추립니다
 # frequency table
 token_count30_df <- as.data.frame(token_count30)
 
-write.csv(frequency_table, file = "D:/대학원/textmining/Doit/frequency_table.csv", fileEncoding = 'cp949')
+write.csv(token_count30_df, file = "D:/대학원/textmining/Doit/frequency_table.csv", fileEncoding = 'cp949')
 
 read_csv(file = "D:/대학원/textmining/Doit/frequency_table.csv", col_names = TRUE, locale=locale('ko',encoding = 'cp949'))
 
 # word cloud
 library(devtools)
-devtools::install_github("lchiffon/wordcloud2") # 기존 wordcloud2 패키지 제거
+# devtools::install_github("lchiffon/wordcloud2") # 기존 wordcloud2 패키지 제거
 library(wordcloud2)
 
 wordcloud2(token_count30, minRotation = 0, maxRotation = 0, color = "black") 
