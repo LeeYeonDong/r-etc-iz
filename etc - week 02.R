@@ -13,96 +13,100 @@ library(dplyr)
 library(reshape) 
 
 # 데이터 불러오기 및 전처리(Preprocessing)
-raw1 <- read_csv(file = "D:/대학원/textmining/Doit/빅카인즈_국립대학_육성사업.csv", col_names = TRUE, locale = locale('ko',encoding='utf-8'))
+raw1 <- read_csv(file = "D:/대학원/textmining/Doit/대학혁신지원사업.csv", col_names = TRUE, locale = locale('ko',encoding='utf-8'))
+
+raw1 %>% str()
+
+raw2 <- read_csv(file = "D:/대학원/textmining/Doit/대학재정지원사업.csv", col_names = TRUE, locale = locale('ko',encoding='utf-8'))
+
+raw2 %>% str()
+raw2$`뉴스 식별자` <- raw2$`뉴스 식별자` %>% as.character()
+  
+raw3 <- bind_rows(raw1, raw2)
+
 # bigkinds만 encoding = 'utf-8'
 
 # 고유명사 추가
 buildDictionary(ext_dic = "NIADic", user_dic = data.frame("새단어","nqq"),replace_usr_dic = TRUE)
 
-str(raw1) # 구조확인
-glimpse(raw1) # tidyverse 제공
+str(raw3) # 구조확인
+glimpse(raw3) # tidyverse 제공
 
 # 중복기사 제거
-raw1 <- distinct(raw1, 제목, .keep_all = TRUE)
-glimpse(raw1)
+raw3 <- distinct(raw3, 제목, .keep_all = TRUE)
+glimpse(raw3)
+
+# 인사이동 기사 제거
+인사 <- grep("인사이동", raw3$키워드)
+raw3 <- raw3[-인사,]
+
 
 # 필요한 변수 선택 - 변수(variable)가 무엇이냐?
-raw1_df <- select(raw1, 일자, 언론사, 키워드, 제목) # Syntax of select() select(x, variables_to_select)
+raw3_df <- select(raw3, 일자, 언론사, 키워드, 제목) # Syntax of select() select(x, variables_to_select)
 
 # id 부여
-raw1_df$id <- c(1:dim(raw1_df)[1])
+raw3_df$id <- c(1:dim(raw3_df)[1])
 
 # 키워드 바꾸기
-raw1_df$키워드 <- gsub("블랙 스튜디오", "블랙스튜디오", raw1_df$키워드)
+raw3_df$키워드 <- gsub("블랙 스튜디오", "블랙스튜디오", raw3_df$키워드)
 
-grep("블랙스튜디오", raw1_df$키워드)
-View(raw1_df)
+grep("블랙스튜디오", raw3_df$키워드)
+View(raw3_df)
 
 # 월별추이
-raw1_df$일자 <- str_sub(raw1_df$일자,1,6)
+raw3_df$일자 <- str_sub(raw3_df$일자,1,6)
 
 # Frequency table
-raw1_token_df <- unnest_tokens(raw1_df, input = 키워드, output = word, token = "words")
+raw3_token_df <- unnest_tokens(raw3_df, input = 키워드, output = word, token = "words")
 
-raw1_token_df_한글 <- raw1_token_df %>%  
+raw3_token_df_한글 <- raw3_token_df %>%  
   mutate(단어 = str_match(word,"([가-힣]+)")[,2]) %>% # "한글" variable을 만들고 한글만 저장 / ([가-힣]+)/P') 한글만을 선택하는 정규표현식        
   na.omit() %>% # 
   filter(str_length(단어) >= 2) 
 
-raw1_token_df_영어 <- raw1_token_df %>%  
+raw3_token_df_영어 <- raw3_token_df %>%  
   mutate(단어 = str_match(word,"([a-zA-Z]+)")[,2]) %>% ## "영어" variable을 만들고 영어만 저장         
   na.omit() %>% 
   filter(str_length(단어) >= 3) 
 
-raw1_token_df <- bind_rows(raw1_token_df_한글, raw1_token_df_영어)
-raw1_token_df <- select(raw1_token_df, -word)
+raw3_token_df <- bind_rows(raw3_token_df_한글, raw3_token_df_영어)
+raw3_token_df <- select(raw3_token_df, -word)
 
-raw1_token_df$일자 <- as.integer(raw1_token_df$일자)
+raw3_token_df$일자 <- as.integer(raw3_token_df$일자)
 
-View(head(raw1_token_df, 1000))
+View(head(raw3_token_df, 1000))
 
-v1 <- c(1:9)
-mean(v1)
 
 # 불용어 - 반복 작업 필요
-dd <- grep("블랙스튜디오", raw1_token_df$단어)
-raw1_token_df[dd,]
-raw1_token_df[grep("블랙스튜디오", raw1_token_df$단어),]
+stopwords_kor <- read_csv(file = "D:/대학원/textmining/Doit/stopwords_kor.csv", col_names = TRUE, locale = locale('ko',encoding='utf-8'))
 
-제거 <- c()
-
-chr <- c("블랙스튜디오", "반선섭", "개소식", "블랙", "스튜디오")
-
-for(i in 1:length(chr)){
-  
-  cat(i, '번째 전처리 제거 단어를 찾는 중 입니다.\n') 
-  
-  del.tmp <- grep(chr[i], raw1_token_df$단어)
-  제거 <- append(제거,del.tmp)
-}
-
-stopwords_en
 stopwords_kor
 
 chr <- stopwords_kor$stopwords_kor
 
+
+
+제거 <- c()
+
 for(i in 1:length(chr)){
-  
+
   cat(i, '번째 전처리 제거 단어를 찾는 중 입니다.\n') 
   
-  del.tmp <- grep(chr[i], raw1_token_df$단어)
+  del.tmp <- grep(chr[i], raw3_token_df$단어)
   제거 <- append(제거,del.tmp)
 }
 
-raw1_token_df <- raw1_token_df[-제거,]
-View(raw1_token_df)
+raw3_token_df <- raw3_token_df[-제거,]
+raw3_token_df %>% head(1000) %>% view()
+
+raw3_token_df <- raw3_token_df %>% select(-id)
 ## lec.3
 
 # 최다 빈도 단어 Top30을 뽑습니다
-token_count_table <- table(raw1_token_df$단어) # 객체별 빈도를 셉니다
+token_count_table <- table(raw3_token_df$단어) # 객체별 빈도를 셉니다
 token_count <- sort(token_count_table, decreasing = TRUE) # 내림차순 정렬 합니다
 class(token_count)
-token_count30 <- head(token_count, 30)  ## Top 30까지 추립니다
+token_count30 <- head(token_count, 100)  ## Top 30까지 추립니다
 
 # frequency table
 token_count30_df <- as.data.frame(token_count30)
