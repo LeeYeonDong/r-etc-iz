@@ -5,7 +5,6 @@ library(ggplot2)
 library(tm)
 library(qdap)
 library(corpus)
-library(wordcloud2)
 library(stringr)
 library(rJava)
 library(tidytext)
@@ -98,15 +97,13 @@ for(i in 1:length(chr)){
 
 raw3_token_df <- raw3_token_df[-제거,]
 raw3_token_df %>% head(1000) %>% view()
-
-raw3_token_df <- raw3_token_df %>% select(-id)
 ## lec.3
 
 # 최다 빈도 단어 Top30을 뽑습니다
 token_count_table <- table(raw3_token_df$단어) # 객체별 빈도를 셉니다
 token_count <- sort(token_count_table, decreasing = TRUE) # 내림차순 정렬 합니다
 class(token_count)
-token_count30 <- head(token_count, 100)  ## Top 30까지 추립니다
+token_count30 <- head(token_count, 30)  ## Top 30까지 추립니다
 
 # frequency table
 token_count30_df <- as.data.frame(token_count30)
@@ -125,25 +122,27 @@ wordcloud2(token_count30)
 wordcloud2(token_count30, minRotation = pi/6, maxRotation = -pi/6) 
 
 # 글자크기로 순위를 정함
-wordcloud2(token_count, minSize = 10) 
+wordcloud2(token_count, minSize = 5) 
 
 # 글자색
-wordcloud2(token_count30, color = "random-light") 
+wordcloud2(token_count30, color = "random-light", minRotation = 0, maxRotation = 0) 
+wordcloud2(data = token_count30, color = "random-light", backgroundColor = "black")
 wordcloud2(token_count30, color = "random-light", backgroundColor = "black")
-wordcloud2(token_count30, color = "random-light", backgroundColor = "grey")
-wordcloud2(token_count30, color = "random-dark")
+wordcloud2(token_count30, color = "random-dark", backgroundColor = "grey")
 
 # letterCloud
-letterCloud(data = token_count, word = "대학", wordSize = 1)
+letterCloud(data = head(token_count,1000), word = "대학", wordSize = 10)
 
 # use figure file
 wordcloud2(head(token_count,1000), figPath = "D:/대학원/example.png", color = "random-dark")
-wordcloud2(head(token_count,100), figPath = "D:/대학원/example1.png", color = "random-dark")
+wordcloud2(head(token_count,1000), figPath = "D:/대학원/example1.png", color = "random-dark", size = 5)
 
 # bargraph
+token_count30_df <- as.data.frame(token_count30)
+
 token_count30_df %>% 
-  ggplot(aes(x = Freq, y = reorder(Var1, Freq), fill = Freq)) + 
-  geom_col() + 
+  ggplot(aes(x = Var1, y = Freq, fill = Freq)) + 
+  geom_col() +
   theme(axis.text.x = element_text(angle = 0, hjust = 1)) +
   theme(axis.text.y = element_text(angle = 0, hjust = 1, size = 20)) +
   labs(x="", y="") + 
@@ -152,19 +151,111 @@ token_count30_df %>%
   geom_text(aes(label = Freq),hjust = -0.1, size = 5) 
 
 # TF-IDF
-raw1_tf_idf <- raw1_token_df %>% 
+raw3_count <- count(raw3_token_df, id, 단어)
+raw3_count <- filter(raw3_count, n > 3)
+raw3_tf_idf <- bind_tf_idf(raw3_count, term = 단어, document = id, n = n)
+raw3_tf_idf <- arrange(raw3_tf_idf, -tf_idf)
+
+raw3_tf_idf %>% filter(단어 == "장학금")
+
+summary(raw3_tf_idf$tf_idf)
+
+raw3_tf <- raw3_token_df %>% 
   count(id, 단어) %>% 
-  filter(str_count(단어) > 1) %>% 
+  filter(n > 10) %>% 
   bind_tf_idf(term = 단어, document = id, n = n) %>% 
-  arrange(-tf_idf)
+  arrange(-tf)
 
-write.csv(raw1_tf_idf, file = "D:/대학원/textmining/Doit/raw1_tf_idf.csv", fileEncoding = 'cp949')
+raw3_tf100 <- head(raw3_tf,100)
+
+write.csv(raw3_tf_idf100, file = "D:/대학원/textmining/Doit/raw3_tf_idf100.csv", fileEncoding = 'cp949')
 
 
-raw1_token_count_df <- dplyr::count(raw1_token_df, 키워드, word)
-# tally(group_by(raw1_token_df, 키워드, word))
-raw1_token_count_df <- dplyr::filter(raw1_token_count_df, str_count(word) > 1)
-raw1_token_count_df <- bind_tf_idf(raw1_token_count_df, term = word, document = 키워드, n = n) 
-raw1_tf_idf <- dplyr::arrange(raw1_token_count_df, -tf_idf)
 
-dplyr::arrange(bind_tf_idf(dplyr::filter(dplyr::count(raw1_token_df, 키워드, word), str_count(word) > 1), term = word, document = 키워드, n = n), -tf_idf) 
+# raw3_df을 대학 유형별로 나누기
+library(readxl)
+
+# 전문대학교 리스트 만들기
+전문대학교 <- read_excel(path = "D:/대학원/textmining/Doit/고등교육기관 주소록.xlsx", sheet = 1)
+names(전문대학교) <- 전문대학교[1,] %>% as.character()
+전문대학교 <- 전문대학교[-1,]
+
+전문대학교 <- 전문대학교$대학명
+전문대학 <- gsub("대학교", "대학", 전문대학교)
+전문대 <- gsub("대학교", "대", 전문대학교)
+
+전문대_리스트 <- c(전문대학교,전문대학,전문대)
+
+# 전문대 기사 위치
+전문대_기사 <- c()
+
+for(i in 1:length(전문대_리스트)){
+  
+  cat(i, '번째 전문대가 들어간 기사를 찾는 중 입니다.\n') 
+  
+  del.tmp <- grep(전문대_리스트[i], raw3_df$키워드)
+  전문대_기사 <- append(전문대_기사,del.tmp)
+}
+
+# 전문대 기사 제거
+전문대_기사 <- unique(전문대_기사)
+raw3_df <- raw3_df[-전문대_기사,]
+
+
+# 국립대학교
+국립대학교 <- read_excel(path = "D:/대학원/textmining/Doit/고등교육기관 주소록.xlsx", sheet = 2)
+names(국립대학교) <- 국립대학교[1,] %>% as.character()
+국립대학교 <- 국립대학교[-1,]
+
+국립대학교 <- 국립대학교$대학명
+국립대학 <- gsub("대학교", "대학", 국립대학교)
+국립대 <- gsub("대학교", "대", 국립대학교)
+
+국립대_리스트 <- c(국립대학교,국립대학,국립대)
+
+# 국립대 기사 추출
+국립대_기사 <- c()
+
+for(i in 1:length(국립대_리스트)){
+  
+  cat(i, '번째 국립대가 들어간 기사를 찾는 중 입니다.\n') 
+  
+  del.tmp <- grep(국립대_리스트[i], raw3_df$키워드)
+  국립대_기사 <- append(국립대_기사,del.tmp)
+}
+
+국립대_기사 <- unique(국립대_기사)
+국립대_df <- raw3_df[국립대_기사,]
+
+
+# 사립대학교
+사립대학교 <- read_excel(path = "D:/대학원/textmining/Doit/고등교육기관 주소록.xlsx", sheet = 3)
+names(사립대학교) <- 사립대학교[1,] %>% as.character()
+사립대학교 <- 사립대학교[-1,]
+
+사립대학교 <- 사립대학교$대학명
+사립대학 <- gsub("대학교", "대학", 사립대학교)
+사립대 <- gsub("대학교", "대", 사립대학교)
+
+사립대_리스트 <- c(사립대학교,사립대학,사립대)
+
+# 사립대 기사 추출
+사립대_기사 <- c()
+
+for(i in 1:length(사립대_리스트)){
+  
+  cat(i, '번째 사립대가 들어간 기사를 찾는 중 입니다.\n') 
+  
+  del.tmp <- grep(사립대_리스트[i], raw3_df$키워드)
+  사립대_기사 <- append(사립대_기사,del.tmp)
+}
+
+사립대_기사 <- unique(사립대_기사)
+사립대_df <- raw3_df[사립대_기사,]
+
+
+# 국립대 사립대 외 기사 
+국_사_기사 <- c(국립대_기사, 사립대_기사) %>% unique()
+국_사_df <- raw3_df[국_사_기사,]
+국_사_외_df <- raw3_df[-국_사_기사,]
+
