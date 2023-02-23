@@ -58,6 +58,9 @@ raw3_df$일자 <- str_sub(raw3_df$일자,1,6)
 # Frequency table
 raw3_token_df <- unnest_tokens(raw3_df, input = 키워드, output = word, token = "words")
 
+raw3_df %>% extractNoun()
+
+
 raw3_token_df_한글 <- raw3_token_df %>%  
   mutate(단어 = str_match(word,"([가-힣]+)")[,2]) %>% # "한글" variable을 만들고 한글만 저장 / ([가-힣]+)/P') 한글만을 선택하는 정규표현식        
   na.omit() %>% # 
@@ -82,7 +85,6 @@ stopwords_kor <- read_csv(file = "D:/대학원/textmining/Doit/stopwords_kor.csv
 stopwords_kor
 
 chr <- stopwords_kor$stopwords_kor
-
 
 
 제거 <- c()
@@ -173,18 +175,23 @@ write.csv(raw3_tf_idf100, file = "D:/대학원/textmining/Doit/raw3_tf_idf100.cs
 
 
 # raw3_df을 대학 유형별로 나누기
+install.packages("readxl")
 library(readxl)
 
 # 전문대학교 리스트 만들기
-전문대학교 <- read_excel(path = "D:/대학원/textmining/Doit/고등교육기관 주소록.xlsx", sheet = 1)
+전문대학교 <- read_excel(path = 
+                      "D:/대학원/textmining/Doit/고등교육기관 주소록.xlsx", sheet = 1)
 names(전문대학교) <- 전문대학교[1,] %>% as.character()
 전문대학교 <- 전문대학교[-1,]
 
 전문대학교 <- 전문대학교$대학명
-전문대학 <- gsub("대학교", "대학", 전문대학교)
-전문대 <- gsub("대학교", "대", 전문대학교)
 
-전문대_리스트 <- c(전문대학교,전문대학,전문대)
+전문대 <- gsub("대학교", "대", 전문대학교)
+전문대 <- gsub("대학", "대", 전문대학교)
+여자전문대 <- gsub("여자대", "여대", 전문대학교)
+
+전문대_리스트 <- c(전문대학교, 여자전문대)
+전문대_리스트 <- unique(전문대_리스트)
 
 # 전문대 기사 위치
 전문대_기사 <- c()
@@ -194,7 +201,7 @@ for(i in 1:length(전문대_리스트)){
   cat(i, '번째 전문대가 들어간 기사를 찾는 중 입니다.\n') 
   
   del.tmp <- grep(전문대_리스트[i], raw3_df$키워드)
-  전문대_기사 <- append(전문대_기사,del.tmp)
+  전문대_기사 <- c(전문대_기사, del.tmp)
 }
 
 # 전문대 기사 제거
@@ -206,22 +213,22 @@ raw3_df <- raw3_df[-전문대_기사,]
 국립대학교 <- read_excel(path = "D:/대학원/textmining/Doit/고등교육기관 주소록.xlsx", sheet = 2)
 names(국립대학교) <- 국립대학교[1,] %>% as.character()
 국립대학교 <- 국립대학교[-1,]
-
 국립대학교 <- 국립대학교$대학명
-국립대학 <- gsub("대학교", "대학", 국립대학교)
-국립대 <- gsub("대학교", "대", 국립대학교)
 
-국립대_리스트 <- c(국립대학교,국립대학,국립대)
+국립대 <- gsub("대학교", "대", 국립대학교)
+교대 <- gsub("교육대", "교대", 국립대학교)
+국립대 <- c(국립대, 교대, "KAIST", "카이스트", "UNIST", "DGIST", "GIST", "지스트", "한예종", "한체대", "서울과기대")
+국립대 <- unique(국립대)
 
 # 국립대 기사 추출
 국립대_기사 <- c()
 
-for(i in 1:length(국립대_리스트)){
+for(i in 1:length(국립대)){
   
   cat(i, '번째 국립대가 들어간 기사를 찾는 중 입니다.\n') 
   
-  del.tmp <- grep(국립대_리스트[i], raw3_df$키워드)
-  국립대_기사 <- append(국립대_기사,del.tmp)
+  del.tmp <- grep(국립대[i], raw3_df$키워드)
+  국립대_기사 <- c(국립대_기사,del.tmp)
 }
 
 국립대_기사 <- unique(국립대_기사)
@@ -234,10 +241,12 @@ names(사립대학교) <- 사립대학교[1,] %>% as.character()
 사립대학교 <- 사립대학교[-1,]
 
 사립대학교 <- 사립대학교$대학명
-사립대학 <- gsub("대학교", "대학", 사립대학교)
 사립대 <- gsub("대학교", "대", 사립대학교)
+사립대 <- gsub("대학", "대", 사립대)
+여자대 <- gsub("여자대", "여대", 사립대)
 
-사립대_리스트 <- c(사립대학교,사립대학,사립대)
+사립대_리스트 <- c(사립대, 여자대)
+사립대_리스트 <- unique(사립대_리스트)
 
 # 사립대 기사 추출
 사립대_기사 <- c()
@@ -253,9 +262,39 @@ for(i in 1:length(사립대_리스트)){
 사립대_기사 <- unique(사립대_기사)
 사립대_df <- raw3_df[사립대_기사,]
 
+사립대_df$키워드 %>% SimplePos09()
 
 # 국립대 사립대 외 기사 
 국_사_기사 <- c(국립대_기사, 사립대_기사) %>% unique()
+
 국_사_df <- raw3_df[국_사_기사,]
 국_사_외_df <- raw3_df[-국_사_기사,]
+
+
+# n-gram : 연이어 사용된 n개의 단어
+# 엔씨
+# install.packages("igraph")
+library(igraph)
+
+set.seed(1201)
+
+arr <- grid::arrow(type = "closed", length = unit(.20, "inches"))
+
+raw3_token_df %>% 
+  group_by(id) %>% 
+  summarise(sentence = paste(단어, collapse = " ")) %>% 
+  unnest_tokens(input = sentence,
+                output = trigram,
+                token = "ngrams",
+                n = 3) %>% 
+  separate(trigram, c("word1", "word2", "word3"), sep = " ") %>%    
+  count(word1, word2, word3, sort = TRUE) %>% 
+  na.omit() %>% 
+  filter(n >= 500) %>% 
+  graph_from_data_frame() %>% 
+  ggraph(layout = "fr") +
+  geom_edge_link(color = "black", alpha = 1, arrow = arr) +
+  geom_node_point(color = "#D55E00", alpha = 1, size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE , size = 5) +
+  theme_graph()
 
