@@ -31,7 +31,7 @@ rep_col <- c(rep("#E69F00",times = (lgp %>% filter(Category == cate[1]) %>% dim(
   rep("#56B4E9",times = (lgp %>% filter(Category == cate[2]) %>% dim())[1]),
   rep("#009E73",times = (lgp %>% filter(Category == cate[3]) %>% dim())[1]),
   rep("#D55E00",times = (lgp %>% filter(Category == cate[4]) %>% dim())[1]))
-
+lgp %>% str()
 lgp %>% 
   ggplot(aes(x = order, y = LogP, fill = Category)) +
   geom_bar(stat = "identity") +
