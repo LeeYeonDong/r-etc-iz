@@ -2,7 +2,7 @@ library(tidyverse)
 library(agricolae)
 
 
-data3 <- read.csv("D:/유아특수논문/data3.csv", header = TRUE)
+data3 <- read.csv("D:/대학원/유아특수논문/data3.csv", header = TRUE)
 data3 %>% str()
 data3$보조교사 <- as.integer(data3$보조교사) 
 data3$보육경력 <- as.factor(data3$보육경력) 
