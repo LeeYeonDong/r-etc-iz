@@ -54,13 +54,22 @@ rep_col <- c(rep("#E69F00",times = (data %>% filter(op == unique(data$op)[1]) %>
              rep("#56B4E9",times = (data %>% filter(op == unique(data$op)[2]) %>% nrow())),
              rep("#009E73",times = (data %>% filter(op == unique(data$op)[3]) %>% nrow())))
 
-data %>% 
-  ggplot(aes(x = id, y = Measurement, fill = op)) +
+data_m <- data %>% 
+  select(-c(id)) %>% 
+  arrange(part, op)
+data_m$id <- paste0(data_m$op,"_",data_m$part)
+
+data_m <- data_m %>% 
+  group_by(op,part,id) %>% 
+  summarise(xbar = mean(Measurement))
+
+data_m %>% 
+  ggplot(aes(x = id, y = xbar, fill = op)) +
   geom_bar(stat = "identity")+
   theme_classic() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3, size = 5)) +
   xlab("Description") +
-  scale_y_continuous(limit = c(0,max(data$Measurement))) +
+  scale_y_continuous(limit = c(0,max(data_m$xbar))) +
   theme(legend.position = "top") + 
   theme(legend.text = element_text(colour="black", size = 10, face = "bold")) +
   theme(legend.title = element_blank()) +
@@ -78,8 +87,6 @@ data_r <- data %>%
   select(-c(id)) %>% 
   arrange(part, op)
 data_r$id <- paste0(data_r$op,"_",data_r$part)
-
-data_r %>% view()
 
 data_r <- data_r %>% 
   group_by(op,part,id) %>% 
@@ -99,7 +106,7 @@ data_r %>%
 
 # xbar Chart by operator and part - qcc
 qcc.groups(data$Measurement, data$op) %>% 
-  qcc(type = "xbar",plot = FALSE) %>% 
+  qcc(type = "xbar",plot = TRUE) %>% 
   summary()
 
 qcc.groups(data$Measurement, data$part) %>% 
