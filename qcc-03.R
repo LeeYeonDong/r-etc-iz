@@ -2,6 +2,7 @@ install.packages("qcc")
 library(qcc)
 library(tidyverse)
 
+# 예제 4-2
 # Generate and edit random data 
 set.seed(1029)
 
