@@ -1,3 +1,6 @@
+# Error in .Call.graphics(C_palette2,
+dev.off()
+
 library(tidyverse)
 lgp <- read.csv("D:/대학원/연구과제/110322graph.csv", header = T)
 lgp <- lgp %>% 
@@ -9,6 +12,8 @@ lgp$LogP <- lgp$LogP * -1
 
 cate <- lgp$Category %>% unique()
 bar_col <- c("#E69F00", "#56B4E9", "#009E73","#D55E00")
+
+lgp %>% str()
 
 lgp_r <- (lgp %>% filter(Category == "Reactome Gene Sets") %>% arrange(LogP))[1:10,]
 lgp_g <- (lgp %>% filter(Category == "GO Biological Processes") %>% arrange(LogP))[1:10,]

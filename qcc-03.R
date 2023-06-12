@@ -22,13 +22,14 @@ pst$표본번호 <- c(1:s) # 표본번호
 pst$부분군 <- c(1:(nrow(pst)/d)) # 부분군
 
 # mutate 함수를 사용하면 데이터 프레임 크기를 맞춰줘야함
-
 pst$일 <- str_replace_all(pst$일, pattern = "day", replacement = "") %>% 
   as.integer()
 
 pst <- pst %>% 
   as_tibble() %>% 
   select(일, 시각, 표본번호, 부분군, value)
+
+pst %>% view()
 
 # xbar chart
 xbar_chart <- pst %>% 
@@ -55,7 +56,7 @@ rbar_chart %>% summary()
 rbar_chart$limits
 
 
-# 예제 5-2 p.132
+# 예제 5-2 p.137
 set.seed(1029)
 
 d <- 10 # 10일간 측정
@@ -115,6 +116,8 @@ che$일 <- str_replace_all(che$일, pattern = "day", replacement = "") %>%
 che <- che %>% 
   as_tibble() %>% 
   select(일, 시각, 표본번호, value)
+
+view(che)
 
 # X_MR 관리도
 # x_chart

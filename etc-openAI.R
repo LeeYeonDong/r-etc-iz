@@ -2,7 +2,7 @@ library(openai)
 library(tidyverse)
 
 Sys.setenv(
-  OPENAI_API_KEY = "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")
+  OPENAI_API_KEY = "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")
 
 create_completion(
   model = "ada",

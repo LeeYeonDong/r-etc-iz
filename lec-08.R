@@ -20,6 +20,15 @@ t.cv <- qt(1-alpha, df = n-1)
 # 신뢰구간
 xbar + c(-t.cv * s/sqrt(n), t.cv * s/sqrt(n))
 
+# 정규성 검정
+library(tidyverse)
+head(airquality)
+
+hist(airquality$Temp)
+shapiro.test(airquality$Temp)
+qqnorm(airquality$Temp)
+qqline(airquality$Temp, col = 2)
+
 # t.test
 library(tidyverse)
 head(airquality)
@@ -41,8 +50,7 @@ t.cv <- qt(1-alpha, df = n-1)
 t.test(x, alternative = "less", mu = 200)
 
 
-## 8.7
-
+## 예제 8.7
 n <- 10
 xbar <- 0.7
 s <- 0.4

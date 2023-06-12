@@ -1,0 +1,12 @@
+data(groundbeef)
+serving <- groundbeef$serving
+fitg <- fitdist(serving, "weibull")
+summary(fitg)
+par(mar=c(1,1,1,1))
+plot(fitg)
+plot(fitg, demp = TRUE)
+plot(fitg, histo = FALSE, demp = TRUE)
+cdfcomp(fitg, addlegend=FALSE)
+denscomp(fitg, addlegend=FALSE)
+ppcomp(fitg, addlegend=FALSE)
+qqcomp(fitg, addlegend=FALSE)
