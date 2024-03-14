@@ -31,3 +31,10 @@ extractNoun("대한민국의 주권은 국민에게 있고, 모든 권력은 국
 
 download.file(url = "https://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar",
               destfile = paste0(.libPaths()[1], "/KoNLP/Java/scala-library-2.11.8.jar"))
+
+
+# 1. https://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar 여기에 접속하셔서 <scala-library-2.11.8> 파일을 다운
+# 2. C:\Users\선생님 노트북 이름\AppData\Local\R\win-library\4.2\KoNLP\java에 가셔서 다운받은 scala-library-2.11.8 파일을 붙여넣기한다
+# 3. C:\Program Files\R\R-4.2.2\library 로 간다
+# 4. 아래 KoNLP(D드라이브에 받아놓은) 다운받아 C:\Program Files\R\R-4.2.2\library에 붙여넣은 다음 KoNLP폴더를 압축을 푼다
+# 5. R studio를 모두 끄고 다시 실행한다

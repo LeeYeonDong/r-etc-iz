@@ -3,7 +3,8 @@ library(KoNLP) # 가장 먼저 불러오기
 v1 <- c("선생님 오늘 말고 내일 회신 주셔도 됩니다. 다름아니라, 빅카이즈 활용하지 않고 간단한 문장을 단어 분리 해 보고 싶어서 실습해 보았습니다. 그런데 아래와 같이 나타났습니다.")
 buildDictionary(ext_dic = "woorimalsam")  # "woorimalsam" dic을 불러옵니다
 useNIADic() 
-extractNoun(v1)
+extractNoun("한국사 길잡이")
+v1 %>% SimplePos09()
 
 # KoNLP useNIADic
 install.packages("multilinguer")
@@ -27,7 +28,6 @@ library(ggplot2)
 library(tm)
 library(NLP)
 library(qdap)
-library(corpus)
 library(wordcloud2)
 library(stringr)
 library(rJava)
